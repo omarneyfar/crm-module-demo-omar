@@ -41,6 +41,12 @@ export class OpportunityController {
     return this.opportunityService.findAll(query);
   }
 
+  @Get('pipeline')
+  @ApiOperation({ summary: 'Pipeline recap (totals + per-stage breakdown)' })
+  pipeline() {
+    return this.opportunityService.pipeline();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get an opportunity by id' })
   @ApiParam({ name: 'id', format: 'uuid' })

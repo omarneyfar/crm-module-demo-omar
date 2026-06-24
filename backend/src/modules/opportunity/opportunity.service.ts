@@ -99,6 +99,32 @@ export class OpportunityService {
     });
   }
 
+  async pipeline() {
+    const grouped = await this.prisma.opportunity.groupBy({
+      by: ['stage'],
+      _count: { _all: true },
+      _sum: { amount: true },
+    });
+
+    const byStage = grouped.map((g) => ({
+      stage: g.stage,
+      count: g._count._all,
+      totalAmount: g._sum.amount ?? 0,
+    }));
+
+    const WEIGHTS: Record<string, number> = {
+      LEAD: 0.1, CONTACTED: 0.25, PROPOSAL: 0.5, NEGOTIATION: 0.75, WON: 1, LOST: 0,
+    };
+    const weightedForecast = byStage.reduce(
+      (sum, s) => sum + Number(s.totalAmount) * (WEIGHTS[s.stage] ?? 0), 0,
+    );
+    const totalOpenValue = byStage
+      .filter((s) => s.stage !== 'WON' && s.stage !== 'LOST')
+      .reduce((sum, s) => sum + Number(s.totalAmount), 0);
+
+    return { byStage, totalOpenValue, weightedForecast };
+  }
+
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.opportunity.delete({ where: { id } });
