@@ -31,4 +31,15 @@ export class OpportunityEntity {
 
   @ApiProperty()
   updatedAt!: Date;
+
+  @ApiProperty({ description: 'Open deal past its expected close date' })
+  isLate!: boolean;
+
+  @ApiProperty({
+    description: 'Open deal with no stage change in the last 14 days',
+  })
+  isStagnant!: boolean;
+
+  @ApiProperty({ description: 'isLate || isStagnant — highlighted in the UI' })
+  hasProblem!: boolean;
 }

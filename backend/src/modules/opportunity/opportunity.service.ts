@@ -4,10 +4,38 @@ import { CreateOpportunityDto } from './dto/create-opportunity.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 import { FindOpportunitiesQueryDto } from './dto/find-opportunities-query.dto';
 import { PaginatedResponse } from 'src/common/dto/pagination-query.dto';
+import { OpportunityStage } from 'generated/prisma/enums';
 
 @Injectable()
 export class OpportunityService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Days without a stage change before an OPEN deal is "stagnant", per stage. */
+  private readonly STAGNANT_DAYS_BY_STAGE: Partial<
+    Record<OpportunityStage, number>
+  > = {
+    LEAD: 7,
+    CONTACTED: 10,
+    PROPOSAL: 14,
+    NEGOTIATION: 30,
+  };
+  private readonly DEFAULT_STAGNANT_DAYS = 14;
+
+  private withStatus(o: {
+    stage: OpportunityStage;
+    expectedCloseDate: Date;
+    lastStageChangedAt: Date;
+  }) {
+    const open = o.stage !== 'WON' && o.stage !== 'LOST';
+    const now = Date.now();
+    const isLate = open && o.expectedCloseDate.getTime() < now;
+    const days =
+      this.STAGNANT_DAYS_BY_STAGE[o.stage] ?? this.DEFAULT_STAGNANT_DAYS;
+    const isStagnant =
+      open && now - o.lastStageChangedAt.getTime() > days * 86_400_000;
+
+    return { ...o, isLate, isStagnant, hasProblem: isLate || isStagnant };
+  }
 
   create(createOpportunityDto: CreateOpportunityDto) {
     const { expectedCloseDate, ...rest } = createOpportunityDto;
@@ -38,7 +66,8 @@ export class OpportunityService {
       this.prisma.opportunity.count({ where }),
     ]);
 
-    return new PaginatedResponse(data, total, page, limit);
+    const items = data.map((o) => this.withStatus(o));
+    return new PaginatedResponse(items, total, page, limit);
   }
 
   async findOne(id: string) {
@@ -48,7 +77,7 @@ export class OpportunityService {
     if (!opportunity) {
       throw new NotFoundException(`Opportunity ${id} not found`);
     }
-    return opportunity;
+    return this.withStatus(opportunity);
   }
 
   async update(id: string, updateOpportunityDto: UpdateOpportunityDto) {
