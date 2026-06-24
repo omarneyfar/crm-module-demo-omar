@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOpportunityDto } from './dto/create-opportunity.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
+import { FindOpportunitiesQueryDto } from './dto/find-opportunities-query.dto';
+import { PaginatedResponse } from 'src/common/dto/pagination-query.dto';
 
 @Injectable()
 export class OpportunityService {
@@ -17,8 +19,26 @@ export class OpportunityService {
     });
   }
 
-  findAll() {
-    return this.prisma.opportunity.findMany();
+  async findAll(query: FindOpportunitiesQueryDto) {
+    const { stage, clientType, page = 1, limit = 10 } = query;
+
+    // built once, reused by findMany + count so the filter stays consistent
+    const where = {
+      ...(stage && { stage }),
+      ...(clientType && { client: { type: clientType } }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.opportunity.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.opportunity.count({ where }),
+    ]);
+
+    return new PaginatedResponse(data, total, page, limit);
   }
 
   async findOne(id: string) {
