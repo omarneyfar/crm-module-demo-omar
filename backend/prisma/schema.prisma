@@ -4,14 +4,15 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+  runtime      = "nodejs"
 }
 
 datasource db {
   provider = "postgresql"
 }
-
 
 enum ClientType {
   COMPANY
@@ -28,32 +29,40 @@ enum OpportunityStage {
 }
 
 model Client {
-  id            String        @id @default(uuid()) @db.Uuid
-  type          ClientType
-  name          String?
-  email         String?       @unique
+  id    String     @id @default(uuid()) @db.Uuid
+  type  ClientType
+  email String?    @unique
+  phone String?
+
+  // COMPANY only
+  companyName String? @map("company_name")
+  siret       String? //french companies
+
+  // INDIVIDUAL only
+  firstName String? @map("first_name")
+  lastName  String? @map("last_name")
 
   opportunities Opportunity[]
-  
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
   @@map("clients")
 }
 
 model Opportunity {
-  id                 String           @id @default(uuid()) @db.Uuid
-  clientId           String           @map("client_id") @db.Uuid
-  title              String
-  amount             Decimal          @db.Decimal(15, 2)
-  stage              OpportunityStage @default(LEAD)
-  expectedCloseDate  DateTime         @map("expected_close_date") @db.Date
+  id                String           @id @default(uuid()) @db.Uuid
+  clientId          String           @map("client_id") @db.Uuid
+  title             String
+  amount            Decimal          @db.Decimal(15, 2)
+  stage             OpportunityStage @default(LEAD)
+  expectedCloseDate DateTime         @map("expected_close_date") @db.Date
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  
-  lastStageChangedAt DateTime         @default(now()) @map("last_stage_changed_at")
-  createdAt          DateTime         @default(now()) @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  lastStageChangedAt DateTime @default(now()) @map("last_stage_changed_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
   @@map("opportunities")
 }
-
-

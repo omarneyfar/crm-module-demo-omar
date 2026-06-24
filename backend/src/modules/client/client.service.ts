@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { FindClientsQueryDto } from './dto/find-clients-query.dto';
+import { PaginatedResponse } from '../../common/dto/pagination-query.dto';
 
 @Injectable()
 export class ClientService {
@@ -11,8 +13,24 @@ export class ClientService {
     return this.prisma.client.create({ data: createClientDto });
   }
 
-  findAll() {
-    return this.prisma.client.findMany();
+  async findAll(query: FindClientsQueryDto) {
+    const { type, page = 1, limit = 10 } = query;
+
+    const where = {
+      ...(type && { type }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.client.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.client.count({ where }),
+    ]);
+
+    return new PaginatedResponse(data, total, page, limit);
   }
 
   async findOne(id: string) {

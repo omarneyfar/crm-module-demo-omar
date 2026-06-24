@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,6 +17,9 @@ import {
 import { ClientService } from './client.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { FindClientsQueryDto } from './dto/find-clients-query.dto';
+import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-response.decorator';
+import { ClientEntity } from './entities/client.entity';
 
 @ApiTags('clients')
 @Controller('clients')
@@ -31,10 +35,10 @@ export class ClientController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all clients' })
-  @ApiResponse({ status: 200, description: 'List of clients.' })
-  findAll() {
-    return this.clientService.findAll();
+  @ApiOperation({ summary: 'List clients (filter by type, paginated)' })
+  @ApiPaginatedResponse(ClientEntity)
+  findAll(@Query() query: FindClientsQueryDto) {
+    return this.clientService.findAll(query);
   }
 
   @Get(':id')
