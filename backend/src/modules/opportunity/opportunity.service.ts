@@ -32,12 +32,17 @@ export class OpportunityService {
   }
 
   async update(id: string, updateOpportunityDto: UpdateOpportunityDto) {
-    await this.findOne(id);
-    const { expectedCloseDate, ...rest } = updateOpportunityDto;
+    const existing = await this.findOne(id);
+    const { expectedCloseDate, stage, ...rest } = updateOpportunityDto;
+
+    const stageChanged = stage !== undefined && stage !== existing.stage;
+
     return this.prisma.opportunity.update({
       where: { id },
       data: {
         ...rest,
+        ...(stage !== undefined && { stage }),
+        ...(stageChanged && { lastStageChangedAt: new Date() }),
         ...(expectedCloseDate && {
           expectedCloseDate: new Date(expectedCloseDate),
         }),
