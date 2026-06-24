@@ -31,7 +31,7 @@ model Client {
   id            String        @id @default(uuid()) @db.Uuid
   type          ClientType
   name          String?
-  email         String?
+  email         String?       @unique
 
   opportunities Opportunity[]
   
@@ -47,12 +47,12 @@ model Opportunity {
   amount             Decimal          @db.Decimal(15, 2)
   stage              OpportunityStage @default(LEAD)
   expectedCloseDate  DateTime         @map("expected_close_date") @db.Date
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
   lastStageChangedAt DateTime         @default(now()) @map("last_stage_changed_at")
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
-
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
   @@map("opportunities")
 }
 
