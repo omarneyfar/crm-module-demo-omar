@@ -23,8 +23,4 @@ export class CreateClientDto {
   @IsEmail()
   email?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  phone?: string;
 }

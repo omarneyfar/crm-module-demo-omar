@@ -31,7 +31,7 @@ model Client {
   id            String        @id @default(uuid()) @db.Uuid
   type          ClientType
   name          String?
-  email         String?
+  email         String?       @unique
 
   opportunities Opportunity[]
   
