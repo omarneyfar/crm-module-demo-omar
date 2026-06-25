@@ -1,4 +1,11 @@
-import { IsEmail, IsString, IsOptional, IsEnum, ValidateIf } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  IsOptional,
+  IsEnum,
+  ValidateIf,
+  Matches,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum ClientType {
@@ -25,9 +32,9 @@ export class CreateClientDto {
   @IsString()
   companyName?: string;
 
-  @ApiPropertyOptional()
-  @ValidateIf((o) => o.type === ClientType.COMPANY)
-  @IsOptional() @IsString()
+  @ApiPropertyOptional({ example: '12345678901234' })
+  @IsOptional()
+  @Matches(/^\d{14}$/, { message: 'SIRET must be 14 digits' })
   siret?: string;
 
   // required only for INDIVIDUAL

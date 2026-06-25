@@ -11,6 +11,12 @@ const optionalString = z.preprocess(
   (v) => (v === "" ? undefined : v),
   z.string().optional(),
 );
+// French company id: exactly 14 digits, only validated when one is provided.
+const SIRET_REGEX = /^\d{14}$/;
+const optionalSiret = z.preprocess(
+  (v) => (v === "" ? undefined : v),
+  z.string().regex(SIRET_REGEX, "SIRET must be 14 digits").optional(),
+);
 
 export const clientQuerySchema = z.object({
   type: clientTypeEnum.optional(),
@@ -26,7 +32,7 @@ export const createClientSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("COMPANY"),
     companyName: z.string().min(1, "Company name is required"),
-    siret: optionalString,
+    siret: optionalSiret,
     ...shared,
   }),
   z.object({
@@ -44,7 +50,7 @@ export const updateClientSchema = z.object({
   email: optionalEmail,
   phone: optionalString,
   companyName: optionalString,
-  siret: optionalString,
+  siret: optionalSiret,
   firstName: optionalString,
   lastName: optionalString,
 });
@@ -60,7 +66,11 @@ export const clientFormSchema = z
     email: z.string().email("Invalid email").or(z.literal("")).optional(),
     phone: z.string().optional(),
     companyName: z.string().optional(),
-    siret: z.string().optional(),
+    siret: z
+      .string()
+      .regex(SIRET_REGEX, "SIRET must be 14 digits")
+      .or(z.literal(""))
+      .optional(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
   })
