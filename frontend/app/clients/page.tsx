@@ -14,7 +14,7 @@ import {
 import type { ClientType } from "@/features/clients/types";
 
 interface PageProps {
-  searchParams: Promise<{ type?: string; page?: string }>;
+  searchParams: Promise<{ type?: string; page?: string; limit?: string }>;
 }
 
 export default async function ClientsPage({ searchParams }: PageProps) {
@@ -22,8 +22,9 @@ export default async function ClientsPage({ searchParams }: PageProps) {
   const type: ClientType | undefined =
     params.type === "COMPANY" || params.type === "INDIVIDUAL" ? params.type : undefined;
   const page = Math.max(1, Number(params.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(params.limit) || 10));
 
-  const result = await getClients({ type, page, limit: 10 });
+  const result = await getClients({ type, page, limit });
 
   return (
     <div className="space-y-6 p-8">
@@ -81,6 +82,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
             totalPages={result.data.totalPages}
             hasNext={result.data.hasNext}
             hasPrevious={result.data.hasPrevious}
+            limit={result.data.limit}
             params={{ type }}
           />
         </>
