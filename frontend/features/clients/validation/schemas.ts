@@ -49,3 +49,44 @@ export const updateClientSchema = z.object({
   lastName: optionalString,
 });
 export type UpdateClientInput = z.infer<typeof updateClientSchema>;
+
+// Flat schema for the form (react-hook-form keeps every field mounted).
+// Plain string fields (no preprocess) so the form value types stay simple;
+// the empty-string -> undefined cleanup happens in the action's schema.
+// The conditional "required" rules live in superRefine instead of a union.
+export const clientFormSchema = z
+  .object({
+    type: clientTypeEnum,
+    email: z.string().email("Invalid email").or(z.literal("")).optional(),
+    phone: z.string().optional(),
+    companyName: z.string().optional(),
+    siret: z.string().optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.type === "COMPANY" && !value.companyName) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["companyName"],
+        message: "Company name is required",
+      });
+    }
+    if (value.type === "INDIVIDUAL") {
+      if (!value.firstName) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["firstName"],
+          message: "First name is required",
+        });
+      }
+      if (!value.lastName) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lastName"],
+          message: "Last name is required",
+        });
+      }
+    }
+  });
+export type ClientFormValues = z.infer<typeof clientFormSchema>;

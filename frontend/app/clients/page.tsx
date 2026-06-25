@@ -2,6 +2,7 @@ import { getClients } from "@/features/clients/actions";
 import { clientDisplayName } from "@/features/clients/lib/display";
 import { ClientTypeBadge } from "@/features/clients/components/client-type-badge";
 import { ClientsFilter } from "@/features/clients/components/clients-filter";
+import { CreateClientDialog } from "@/features/clients/components/create-client-dialog";
 import { Pagination } from "@/components/pagination";
 import {
   Table,
@@ -28,9 +29,12 @@ export default async function ClientsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-6 p-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
-        <p className="text-sm text-muted-foreground">Companies and individuals</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
+          <p className="text-sm text-muted-foreground">Companies and individuals</p>
+        </div>
+        <CreateClientDialog />
       </div>
 
       <ClientsFilter current={type} />
