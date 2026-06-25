@@ -34,7 +34,7 @@ export default function RootLayout({
           <AppSidebar />
           <main className="min-w-0 flex-1">{children}</main>
         </div>
-        <Toaster richColors position="top-right" />
+        <Toaster richColors closeButton position="top-right" />
       </body>
     </html>
   );

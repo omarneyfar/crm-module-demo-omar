@@ -3,6 +3,7 @@ import { clientDisplayName } from "@/features/clients/lib/display";
 import { ClientTypeBadge } from "@/features/clients/components/client-type-badge";
 import { ClientsFilter } from "@/features/clients/components/clients-filter";
 import { CreateClientDialog } from "@/features/clients/components/create-client-dialog";
+import { ClientRowActions } from "@/features/clients/components/client-row-actions";
 import { Pagination } from "@/components/pagination";
 import {
   Table,
@@ -28,7 +29,7 @@ export default async function ClientsPage({ searchParams }: PageProps) {
   const result = await getClients({ type, page, limit });
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="flex min-h-screen flex-col gap-6 p-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
@@ -53,12 +54,13 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                   <TableHead>Type</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {result.data.data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No clients found.
                     </TableCell>
                   </TableRow>
@@ -73,6 +75,9 @@ export default async function ClientsPage({ searchParams }: PageProps) {
                       </TableCell>
                       <TableCell>{client.email ?? "—"}</TableCell>
                       <TableCell>{client.phone ?? "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <ClientRowActions client={client} />
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -80,15 +85,17 @@ export default async function ClientsPage({ searchParams }: PageProps) {
             </Table>
           </div>
 
-          <Pagination
-            basePath="/clients"
-            page={result.data.page}
-            totalPages={result.data.totalPages}
-            hasNext={result.data.hasNext}
-            hasPrevious={result.data.hasPrevious}
-            limit={result.data.limit}
-            params={{ type }}
-          />
+          <div className="mt-auto">
+            <Pagination
+              basePath="/clients"
+              page={result.data.page}
+              totalPages={result.data.totalPages}
+              hasNext={result.data.hasNext}
+              hasPrevious={result.data.hasPrevious}
+              limit={result.data.limit}
+              params={{ type }}
+            />
+          </div>
         </>
       )}
     </div>
