@@ -17,13 +17,20 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { OpportunityStage } from "@/features/opportunities/types";
+import type {
+  OpportunityStage,
+  OpportunityStatus,
+} from "@/features/opportunities/types";
 import type { ClientType } from "@/features/clients/types";
+
+const STATUSES: OpportunityStatus[] = ["LATE", "STAGNANT", "PROBLEM", "ON_TRACK"];
 
 interface PageProps {
   searchParams: Promise<{
     stage?: string;
     clientType?: string;
+    status?: string;
+    search?: string;
     page?: string;
     limit?: string;
   }>;
@@ -38,11 +45,15 @@ export default async function OpportunitiesPage({ searchParams }: PageProps) {
     params.clientType === "COMPANY" || params.clientType === "INDIVIDUAL"
       ? params.clientType
       : undefined;
+  const status = STATUSES.includes(params.status as OpportunityStatus)
+    ? (params.status as OpportunityStatus)
+    : undefined;
+  const search = params.search?.trim() || undefined;
   const page = Math.max(1, Number(params.page) || 1);
   const limit = Math.min(100, Math.max(1, Number(params.limit) || 10));
 
   const [result, clientsResult] = await Promise.all([
-    getOpportunities({ stage, clientType, page, limit }),
+    getOpportunities({ stage, clientType, status, search, page, limit }),
     getClients({ limit: 100 }),
   ]);
 
@@ -63,7 +74,13 @@ export default async function OpportunitiesPage({ searchParams }: PageProps) {
         <CreateOpportunityDialog clients={clients} />
       </div>
 
-      <OpportunitiesFilter stage={stage} clientType={clientType} limit={limit} />
+      <OpportunitiesFilter
+        stage={stage}
+        clientType={clientType}
+        status={status}
+        search={search}
+        limit={limit}
+      />
 
       {!result.success ? (
         <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-6 text-sm text-destructive">
@@ -131,7 +148,7 @@ export default async function OpportunitiesPage({ searchParams }: PageProps) {
               hasNext={result.data.hasNext}
               hasPrevious={result.data.hasPrevious}
               limit={result.data.limit}
-              params={{ stage, clientType }}
+              params={{ stage, clientType, status, search }}
             />
           </div>
         </>

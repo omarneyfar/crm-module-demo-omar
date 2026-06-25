@@ -24,9 +24,13 @@ export interface Opportunity {
   hasProblem: boolean;
 }
 
+export type OpportunityStatus = "LATE" | "STAGNANT" | "PROBLEM" | "ON_TRACK";
+
 export interface FindOpportunitiesQuery {
   stage?: OpportunityStage;
   clientType?: ClientType;
+  status?: OpportunityStatus;
+  search?: string;
   page?: number;
   limit?: number;
 }

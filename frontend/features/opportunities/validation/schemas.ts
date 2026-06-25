@@ -9,10 +9,18 @@ export const opportunityStageEnum = z.enum([
   "LOST",
 ]);
 const clientTypeFilter = z.enum(["COMPANY", "INDIVIDUAL"]);
+export const opportunityStatusEnum = z.enum([
+  "LATE",
+  "STAGNANT",
+  "PROBLEM",
+  "ON_TRACK",
+]);
 
 export const opportunityQuerySchema = z.object({
   stage: opportunityStageEnum.optional(),
   clientType: clientTypeFilter.optional(),
+  status: opportunityStatusEnum.optional(),
+  search: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
 });

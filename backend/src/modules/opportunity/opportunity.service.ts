@@ -5,6 +5,7 @@ import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 import { FindOpportunitiesQueryDto } from './dto/find-opportunities-query.dto';
 import { PaginatedResponse } from 'src/common/dto/pagination-query.dto';
 import { OpportunityStage } from 'generated/prisma/enums';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class OpportunityService {
@@ -48,13 +49,48 @@ export class OpportunityService {
   }
 
   async findAll(query: FindOpportunitiesQueryDto) {
-    const { stage, clientType, page = 1, limit = 10 } = query;
+    const { stage, clientType, status, search, page = 1, limit = 10 } = query;
 
-    // built once, reused by findMany + count so the filter stays consistent
-    const where = {
-      ...(stage && { stage }),
-      ...(clientType && { client: { type: clientType } }),
+    const now = new Date();
+    // A deal is "late" if it's open and past its expected close date.
+    const lateWhere: Prisma.OpportunityWhereInput = {
+      stage: { notIn: [OpportunityStage.WON, OpportunityStage.LOST] },
+      expectedCloseDate: { lt: now },
     };
+    // "Stagnant" threshold differs per stage, so it's an OR over the open stages.
+    const stagnantWhere: Prisma.OpportunityWhereInput = {
+      OR: Object.entries(this.STAGNANT_DAYS_BY_STAGE).map(([s, days]) => ({
+        stage: s as OpportunityStage,
+        lastStageChangedAt: {
+          lt: new Date(now.getTime() - days * 86_400_000),
+        },
+      })),
+    };
+
+    // Built once, reused by findMany + count so the filter stays consistent.
+    const and: Prisma.OpportunityWhereInput[] = [];
+    if (stage) and.push({ stage });
+    if (clientType) and.push({ client: { type: clientType } });
+    if (search) {
+      and.push({
+        client: {
+          OR: [
+            { companyName: { contains: search, mode: 'insensitive' } },
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+          ],
+        },
+      });
+    }
+    if (status === 'LATE') and.push(lateWhere);
+    else if (status === 'STAGNANT') and.push(stagnantWhere);
+    else if (status === 'PROBLEM') and.push({ OR: [lateWhere, stagnantWhere] });
+    else if (status === 'ON_TRACK') {
+      and.push({ NOT: { OR: [lateWhere, stagnantWhere] } });
+    }
+
+    const where: Prisma.OpportunityWhereInput = and.length ? { AND: and } : {};
 
     const [data, total] = await Promise.all([
       this.prisma.opportunity.findMany({

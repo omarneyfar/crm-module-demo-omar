@@ -27,6 +27,8 @@ function toQueryString(query: FindOpportunitiesQuery): string {
   const params = new URLSearchParams();
   if (query.stage) params.set("stage", query.stage);
   if (query.clientType) params.set("clientType", query.clientType);
+  if (query.status) params.set("status", query.status);
+  if (query.search) params.set("search", query.search);
   if (query.page) params.set("page", String(query.page));
   if (query.limit) params.set("limit", String(query.limit));
   const qs = params.toString();
